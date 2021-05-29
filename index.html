@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Parcel Sandbox</title>
+    <meta charset="UTF-8" />
+  </head>
+
+  <body>
+    <!--Create a Canvas element
+    Canvas lets us draw shapes on our web page-->
+    <canvas id="myCanvas" height="400" width="700"></canvas>
+
+    <!--Next we'll use some CSS to give our Canvas object some style-->
+    <style>
+      canvas {
+        background-color: red;
+        border: 6px solid;
+      }
+    </style>
+
+    <!--Now we're  gonna jump into the JavaScript
+    This is going to allow us to interact with the
+    things that we're drawing on our Canvas-->
+    <script>
+      //First, we have to make variables for our canvas
+      var canvas = document.getElementById("myCanvas");
+      //Make a context for the canvas
+      var context = canvas.getContext("2d");
+
+      function drawCircle(pX, pY, pW) {
+        //Now we are going to use our context variable to draw a circle
+        context.beginPath(); //Starts drawing
+        context.arc(pX, pY, pW, 0, Math.PI * 2, false); //Creates the dimensions for our circle
+        context.fillStyle = "green"; //Chooses the color for our circle
+        context.fill(); //Actually fills the circle with that color
+        context.closePath(); //Stops drawing
+      }
+
+      var hit = false;
+
+      //Now we're gonna make up some variables to hold the dimensions of our circle
+      //Character Properties
+      var x = 40;
+      var y = 200;
+      var w = 50;
+      var speed = 5;
+      var health = 5;
+
+      var bullet = { bX: x, bY: y, bW: 10 };
+
+      //Next we want to set up some controls so that we can move our  circle around
+      //We'll use the arrow keys to move UP, DOWN, LEFT, and RIGHT
+      //We need to keep track of which keys are being pushed at what time
+      //So we'll make some variables to do that
+      var upPressed = false;
+      var leftPressed = false;
+      var rightPressed = false;
+      var downPressed = false;
+
+      var lastPressed = "";
+      //Why do we set these variables to false????
+      //How do we make them true, When do we make them true??
+      //We need to make a function that keeps track of which button is being pushed,
+      //Then we need change the correect variable accordingly
+
+      //Now we have our functions made, we need to tell the computer
+      //to listen for them
+      document.addEventListener("keydown", keyDown, false);
+      document.addEventListener("keyup", keyUp, false);
+
+      //First lets start with when someone pushes a button
+      function keyDown(e) {
+        //This is where we change the variables to true, because
+        //their specific  button is being pushed
+        if (e.key == "ArrowUp") {
+          upPressed = true;
+        } //Now we need to tell the computer to check for the rest of them
+        if (e.key == "ArrowLeft") {
+          leftPressed = true;
+        }
+        if (e.key == "ArrowRight") {
+          rightPressed = true;
+        }
+        if (e.key == "ArrowDown") {
+          downPressed = true;
+          lastPressed = "down";
+        }
+
+        if (e.key == " ") {
+          shoot();
+        }
+      }
+      //Next we need to do something similar
+      //We need to set the variables back to false,
+      //when their button is no longer being pushed
+      function keyUp(e) {
+        //This is where we change the variables to false, because
+        //their specific button is not being pushed
+        if (e.key == "ArrowUp") {
+          upPressed = false;
+          lastPressed = "up";
+        } //Now we need to tell the computer to check for the rest of them
+        if (e.key == "ArrowLeft") {
+          leftPressed = false;
+          lastPressed = "left";
+        }
+        if (e.key == "ArrowRight") {
+          rightPressed = false;
+          lastPressed = "right";
+        }
+        if (e.key == "ArrowDown") {
+          downPressed = false;
+          lastPressed = "right";
+        }
+      }
+
+      //So we've determined whether or not our user has pressed a key and which key they've pressed
+      //Now what do we do with this  information????
+      //Depending on which key we pressed, we should move in a certain direction, right???
+      function moveCircle() {
+        if (upPressed == true) {
+          y -= speed;
+        }
+        if (downPressed) {
+          y += speed;
+        }
+        if (rightPressed) {
+          x += speed;
+        }
+        if (leftPressed) {
+          x -= speed;
+        }
+      }
+
+      //Add an array for our enemies
+      var enemies = [];
+      //Next we are going to create 2 functions:
+      //1 that will spawn our enemies
+      //and another one that will actually draw them
+
+      //The spawn function will set up the x and y coordinates for our enemies
+      function spawnEnemies() {
+        //Draw and spawn new circles in different and random spots
+        //Get random values
+        var eW = 15;
+        //We are going to use a loop to create 20 enemies
+        //Each with their own unique and random x and y coordinates
+        //Then once we have the values created we put them into our enemies array
+        for (var i = 0; i < 20; i++) {
+          var eX = Math.floor(Math.random() * 700);
+          var eY = -eW;
+          enemies[i] = { x: eX, y: eY, w: eW, enemyDamage: 1 };
+        }
+      }
+
+      function moveEnemies() {
+        //We can have to enemies move in a preplanned way
+        //We can have them move towards our "character"
+        //We can have them moving randomly
+
+        //Make a loop to access all the enemies
+        //Then we want to manipulate their x and y values depending on how we want them to move
+
+        //Attacking a stronghold
+        //Start from the top offscreen
+        //moving down towards us, if they get past us, stronghold is damaged
+
+        for (var i = 0; i < enemies.length; i++) {
+          enemies[i].y += 0.1;
+
+          if (enemies[i].y >= 400) {
+            enemies[i].y = 0;
+          }
+        }
+      }
+
+      function drawEnemies() {
+        for (var i = 0; i < enemies.length; i++) {
+          drawCircle(enemies[i].x, enemies[i].y, enemies[i].w);
+        }
+
+        moveEnemies();
+      }
+
+      function collision() {
+        //if characterX is >= enemyX and
+        //   characterX is <= enemyX + enemyWidth
+        //   characterY is >= enemyY and
+        //   characterY is <= enemyY + enemyWidth
+        displayHealth();
+
+        for (var i = 0; i < enemies.length; i++) {
+          if (
+            x >= enemies[i].x &&
+            x <= enemies[i].x + enemies[i].w &&
+            y >= enemies[i].y &&
+            y <= enemies[i].y + enemies[i].w
+          ) {
+            hit = true;
+
+            if (hit) {
+              //we can set a variable for iFrame to be true/false
+              //we can set a counter to count down if hit is true
+              /*
+                if hit =true
+                  set true to false
+                  coundown from 3 
+                  until counter hits 0
+                  hit =/= true
+              
+              */
+              health -= enemies[i].enemyDamage;
+
+              var counter = 3000;
+              while (counter > 0) {
+                hit = false;
+                counter--; //counter = counter - 1;
+              }
+            }
+          }
+
+          //if the bullets X and Y are in the bounds of the enemies X and Y
+          //Then we'll make the enemy disappear
+          if (
+            bullet.bX <= enemies[i].x + enemies[i].w &&
+            bullet.bX >= enemies[i].x &&
+            bullet.bY <= enemies[i].y + enemies[i].w &&
+            bullet.bY >= enemies[i].y
+          ) {
+            //remove the enemy from the screen
+            enemies[i].x = -1000;
+            enemies[i].y = -1000;
+          }
+        }
+      }
+
+      function bulletMove() {
+        drawCircle(bullet.bX, bullet.bY, bullet.bW);
+        //Determine the direction of the bullet
+        if (lastPressed == "up") {
+          //Create bullet here
+          bullet.bY -= 3;
+        } else if (lastPressed == "down") {
+          bullet.bY += 3;
+        } else if (lastPressed == "right") {
+          bullet.bX += 3;
+        } else if (lastPressed == "left") {
+          bullet.bX -= 3;
+        }
+      }
+      function shoot() {
+        //what direction are we facing
+        //use a new variable to check
+        //Button to shoot - Spacebar
+        bullet.bX = x;
+        bullet.bY = y;
+      }
+
+      spawnEnemies();
+
+      /*TODO*****************
+        1.Make a shoot function - Check - make better later
+        2.We want have enemies spawn at different times - check
+          - Set them up in waves
+        3.Make shapes for stronghold
+        4.Make a variable to show how much damage we've taken
+            -created a variable for character health
+            -define a situation in which we'll take damage
+              1. collision with enemy and character
+              2. collision with enemy and stronghold
+                -if we are hit, take x amount of damage
+      */
+
+      function displayHealth() {
+        //Use the context variable
+        context.font = "16px Arial";
+        context.fillstyle = "#000000";
+        context.fillText("Health: " + health, 8, 20);
+      }
+
+      displayHealth();
+
+      //Now that that's setup, we can actually make our circle move
+      function draw() {
+        //WE NEED TO CLEAR THE CANVAS EVERY TIME TO GIVE THE ILLUSION OF ANIMATION
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        collision();
+
+        moveCircle();
+        drawCircle(x, y, w);
+
+        bulletMove();
+        drawEnemies();
+
+        requestAnimationFrame(draw);
+      }
+
+      draw();
+    </script>
+  </body>
+</html>
